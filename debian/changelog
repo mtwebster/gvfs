@@ -1,3 +1,10 @@
+gvfs (1.20.4) unstable; urgency=medium
+
+  * Apply upstream patch for lp bug:
+    https://bugs.launchpad.net/ubuntu/+source/gvfs/+bug/517021
+
+ -- Michael Webster <miketwebster@gmail.com>  Mon, 20 Apr 2015 11:56:47 -0400
+
 gvfs (1.20.3-0ubuntu1) trusty; urgency=medium
 
   * New upstream stable release (LP: #1416891)
