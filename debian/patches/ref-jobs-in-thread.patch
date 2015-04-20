@@ -1,0 +1,61 @@
+Description: make sure to keep a ref to jobs while they run in a thread
+Origin: vendor, Ubuntu
+
+--- a/daemon/gvfsdaemon.c
++++ b/daemon/gvfsdaemon.c
+@@ -198,6 +198,7 @@
+   GVfsJob *job = G_VFS_JOB (data);
+ 
+   g_vfs_job_run (job);
++  g_object_unref (job);
+ }
+ 
+ static void
+@@ -590,7 +591,8 @@
+   if (!g_vfs_job_try (job))
+     {
+       /* Couldn't finish / run async, queue worker thread */
+-      g_thread_pool_push (daemon->thread_pool, job, NULL); /* TODO: Check error */
++      if (!g_thread_pool_push (daemon->thread_pool, g_object_ref (job), NULL)) /* TODO: Check error */
++        g_object_unref (job);
+     }
+ }
+ 
+@@ -1058,7 +1060,8 @@
+ g_vfs_daemon_run_job_in_thread (GVfsDaemon *daemon,
+ 				GVfsJob    *job)
+ {
+-  g_thread_pool_push (daemon->thread_pool, job, NULL); /* TODO: Check error */
++  if (!g_thread_pool_push (daemon->thread_pool, g_object_ref (job), NULL)) /* TODO: Check error */
++    g_object_unref (job);
+ }
+ 
+ void
+--- a/daemon/gvfschannel.c
++++ b/daemon/gvfschannel.c
+@@ -640,6 +640,7 @@
+     }
+ 
+   g_object_unref (job);
++  g_object_unref (channel);
+ }
+ 
+ /* Might be called on an i/o thread */
+@@ -663,7 +664,7 @@
+ 				   channel->priv->reply_buffer,
+ 				   G_VFS_DAEMON_SOCKET_PROTOCOL_REPLY_SIZE,
+ 				   0, NULL,
+-				   send_reply_cb, channel);  
++				   send_reply_cb, g_object_ref (channel));  
+     }
+   else
+     {
+@@ -672,7 +673,7 @@
+ 				   channel->priv->output_data,
+ 				   channel->priv->output_data_size,
+ 				   0, NULL,
+-				   send_reply_cb, channel);  
++				   send_reply_cb, g_object_ref (channel));  
+     }
+ }
+ 
